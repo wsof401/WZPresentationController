@@ -9,28 +9,23 @@ import UIKit
 
 open class WZPresentationMaskView: UIView {
     /// 指定允许用户与之交互的UIView实例数组 默认为空
-    public var passthroughViews:[UIView] = [UIView](){
+    public var passthroughViews: [UIView] = [] {
         willSet{
             ///有可以交互UIView实例 默认打开dismissPresentedOnTap
-            if newValue.count > 0 {
-                self.dismissPresentedOnTap = true
-            }
+            guard !newValue.isEmpty else { return }
+            self.dismissPresentedOnTap = true
         }
     }
     
     /// 点击遮罩dismiss presentedViewController 默认不可以
-    public var dismissPresentedOnTap:Bool = false
+    public var dismissPresentedOnTap = false
     
     /// 是否模糊
     public fileprivate(set) var isBlur = false
     
-    weak var presentedViewController:WZPresentedViewController!
+    weak var presentedViewController: WZPresentedViewController!
     
-    deinit {
-        passthroughViews = []
-    }
-    
-    required public init(presentedViewController:WZPresentedViewController) {
+    required public init(presentedViewController: WZPresentedViewController) {
         self.presentedViewController = presentedViewController
         super.init(frame: .zero)
         backgroundColor = UIColor.black.withAlphaComponent(0.3)
@@ -41,29 +36,29 @@ open class WZPresentationMaskView: UIView {
     }
     
     override open func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-//        //presentedViewController.view 事件并不会传递过来 因此没必要做多余判断
-//        var dismiss = false
-//        if self.dismissPresentedOnTap == true {
-//            let toPoint = self.convert(point, to: self.presentedViewController.view)
-//            dismiss = self.presentedViewController.view.bounds.contains(toPoint) == false
-//        }
+        //        //presentedViewController.view 事件并不会传递过来 因此没必要做多余判断
+        //        var dismiss = false
+        //        if self.dismissPresentedOnTap == true {
+        //            let toPoint = self.convert(point, to: self.presentedViewController.view)
+        //            dismiss = self.presentedViewController.view.bounds.contains(toPoint) == false
+        //        }
+        
         var hit = super.hitTest(point, with: event)
         var animated = true
-        if passthroughViews.count > 0 && self.isBlur == false && hit == self  {
-            for c in passthroughViews {
-                if let newHit = c.hitTest(self.convert(point, to: c), with: event) {
-                    hit = newHit
-                    animated = false
-                    break
-                }
-            }
-        }
+
         defer {
-            if self.dismissPresentedOnTap == true {
-                self.presentedViewController.dismiss(animated: animated, completion: nil)
-                self.dismissPresentedOnTap = false
+            if dismissPresentedOnTap {
+                presentedViewController.dismiss(animated: animated, completion: nil)
+                dismissPresentedOnTap = false
             }
         }
+
+        if isBlur && hit == self,
+            let newHit = passthroughViews.first(where: { $0.hitTest(convert(point, to: $0), with: event) != .none }) {
+            hit = newHit
+            animated = false
+        }
+
         return hit
     }
 }
@@ -71,33 +66,26 @@ open class WZPresentationMaskView: UIView {
 
 extension WZPresentationMaskView {
     
-    public func setBlurEffect(withView view:UIView ,type:WZPresentationBlurEffectStyle?){
-        guard let `type` = type else { return }
-        guard let snapImage = view.wz_snapshotImage() else { return }
+    public func setBlurEffect(withView view: UIView ,type: WZPresentationBlurEffectStyle?){
+        guard let `type` = type, let snapImage = view.wz_snapshotImage() else { return }
         ///模糊处理
         DispatchQueue.global().async {
-            var blurImage:UIImage? = nil
+            let image: UIImage?
             switch type {
             case .extraLight:
-                blurImage = snapImage.wz_imageByBlurExtraLight
-                break
+                image = snapImage.wz_imageByBlurExtraLight
             case .light:
-                blurImage = snapImage.wz_imageByBlurLight
-                break
+                image = snapImage.wz_imageByBlurLight
             case .dark:
-                blurImage = snapImage.wz_imageByBlurDark
-                break
+                image = snapImage.wz_imageByBlurDark
             }
-            if let `blurImage` = blurImage {
-                let blurColor = UIColor(patternImage: blurImage)
-                DispatchQueue.main.async {
-                    self.isBlur = true
-                    self.backgroundColor = blurColor
-                }
+
+            guard let blurImage = image else { return }
+            let blurColor = UIColor(patternImage: blurImage)
+            DispatchQueue.main.async {
+                self.isBlur = true
+                self.backgroundColor = blurColor
             }
         }
     }
 }
-
-
-

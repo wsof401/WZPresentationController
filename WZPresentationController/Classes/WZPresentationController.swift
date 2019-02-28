@@ -22,9 +22,7 @@ open class WZPresentationController: UIPresentationController {
     override open var frameOfPresentedViewInContainerView: CGRect
     {
         let rect = super.frameOfPresentedViewInContainerView
-        guard let presented = presentedViewController as? WZPresentedViewController else {
-            return rect
-        }
+        guard let presented = presentedViewController as? WZPresentedViewController else { return rect }
         let pSize = presented.preferredContentSize
         let x =  (rect.width - pSize.width) / 2.0
         let y = presented.transitionType.isActionSheet ? (rect.height - pSize.height) : ((rect.height - pSize.height) / 2.0)

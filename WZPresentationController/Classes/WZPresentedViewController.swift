@@ -11,16 +11,16 @@ import UIKit
 open class WZPresentedViewController: UIViewController {
     
     /// 指定允许用户与之交互的UIView实例数组 默认为空
-    public var passthroughViews:[UIView] = [UIView]()
+    public var passthroughViews:[UIView] = []
     
     /// 点击遮罩dismiss presentedViewController 默认不可以
-    public var dismissPresentedOnTap:Bool = false
+    public var dismissPresentedOnTap = false
     
     /// 遮罩透明度 默认0.3
-    public var maskAlpha:CGFloat = 0.3
+    public var maskAlpha: CGFloat = 0.3
     
     /// 转场动画类型
-    public var transitionType:WZPresentationAnimatedTransitionType = .alertNormal
+    public var transitionType: WZPresentationAnimatedTransitionType = .alertNormal
     
     /// 继承WZPresentationMaskView 可以自定义遮罩
     public let maskViewClass:WZPresentationMaskView.Type
